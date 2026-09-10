@@ -4,9 +4,20 @@
 
 #include "encoding.h"
 
-#define ASCII_RANGE 0x80
+#define ASCII_RANGE         0x0080
+#define UTF8_2BYTE_MAX      0x07FF
 
-static const uint16_t cp1251_unicode_map[128] = {
+#define CP1251_OFFSET       128
+#define CP1251_MAP_SIZE     128
+
+#define UTF8_1BYTE_MASK     0x00
+#define UTF8_2BYTE_PREFIX   0xC0
+#define UTF8_3BYTE_PREFIX   0xE0
+#define UTF8_CONT_PREFIX    0x80
+
+#define UTF8_6BIT_MASK      0x3F
+
+static const uint16_t cp1251_unicode_map[CP1251_MAP_SIZE] = {
     0x0402, 0x0403, 0x201A, 0x0453, 0x201E, 0x2026, 0x2020, 0x2021,
     0x20AC, 0x2030, 0x0409, 0x2039, 0x040A, 0x040C, 0x040B, 0x040F,
     0x0452, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014,
@@ -29,7 +40,27 @@ uint16_t cp1251_to_unicode_mapping(uint8_t byte) {
     if (byte < ASCII_RANGE)
         return (uint16_t)byte;
 
-    return cp1251_unicode_map[byte - 128];
+    return cp1251_unicode_map[byte - CP1251_OFFSET];
 }
 
+int unicode_to_utf8_encoding(uint16_t code_point, uint8_t* buffer) {
+    if (code_point < ASCII_RANGE) {
+        buffer[0] = (uint8_t)code_point;
+        
+        return 1;
+    }
+    else if (code_point <= UTF8_2BYTE_MAX) {
+        buffer[0] = (uint8_t)(UTF8_2BYTE_PREFIX | (code_point >> 6));
+        buffer[1] = (uint8_t)(UTF8_CONT_PREFIX  | (code_point & UTF8_6BIT_MASK));
+        
+        return 2;
+    }
+    else {
+        buffer[0] = (uint8_t)(UTF8_3BYTE_PREFIX | (code_point >> 12)); 
+        buffer[1] = (uint8_t)(UTF8_CONT_PREFIX  | ((code_point >> 6) & UTF8_6BIT_MASK));
+        buffer[2] = (uint8_t)(UTF8_CONT_PREFIX  | (code_point & UTF8_6BIT_MASK));
+
+        return 3;
+    }
+}
 
