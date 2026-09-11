@@ -1,2 +1,3 @@
 build/
+tests/output_utf8.txt
 enconv
