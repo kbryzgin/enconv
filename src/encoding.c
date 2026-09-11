@@ -45,21 +45,18 @@ uint16_t cp1251_to_unicode_mapping(uint8_t byte) {
 
 int unicode_to_utf8_encoding(uint16_t code_point, uint8_t* buffer) {
     if (code_point < ASCII_RANGE) {
-        buffer[0] = (uint8_t)code_point;
-        
+        buffer[0] = (uint8_t)code_point;      
         return 1;
     }
     else if (code_point <= UTF8_2BYTE_MAX) {
         buffer[0] = (uint8_t)(UTF8_2BYTE_PREFIX | (code_point >> 6));
         buffer[1] = (uint8_t)(UTF8_CONT_PREFIX  | (code_point & UTF8_6BIT_MASK));
-        
         return 2;
     }
     else {
         buffer[0] = (uint8_t)(UTF8_3BYTE_PREFIX | (code_point >> 12)); 
         buffer[1] = (uint8_t)(UTF8_CONT_PREFIX  | ((code_point >> 6) & UTF8_6BIT_MASK));
         buffer[2] = (uint8_t)(UTF8_CONT_PREFIX  | (code_point & UTF8_6BIT_MASK));
-
         return 3;
     }
 }
