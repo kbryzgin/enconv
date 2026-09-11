@@ -17,6 +17,12 @@
 
 #define UTF8_6BIT_MASK      0x3F
 
+#define CP1251_UNDEF_BYTE   0x98
+#define UNICODE_NULL        0x0000
+#define FALLBACK_CHAR       '?'
+
+#define UTF8_BUFFER_SIZE    3
+
 static const uint16_t cp1251_unicode_map[CP1251_MAP_SIZE] = {
     0x0402, 0x0403, 0x201A, 0x0453, 0x201E, 0x2026, 0x2020, 0x2021,
     0x20AC, 0x2030, 0x0409, 0x2039, 0x040A, 0x040C, 0x040B, 0x040F,
@@ -59,5 +65,28 @@ int unicode_to_utf8_encoding(uint16_t code_point, uint8_t* buffer) {
         buffer[2] = (uint8_t)(UTF8_CONT_PREFIX  | (code_point & UTF8_6BIT_MASK));
         return 3;
     }
+}
+
+int convert_file(FILE *input, FILE *output) {
+    if (input == NULL || output == NULL)
+        return 1;
+
+    int c;
+    uint8_t buffer[UTF8_BUFFER_SIZE];
+
+    while ((c = fgetc(input)) != EOF) {
+        uint16_t code_point = cp1251_to_unicode_mapping((uint8_t)c);
+
+        if (code_point == UNICODE_NULL && (uint8_t)c == CP1251_UNDEF_BYTE)
+            code_point = FALLBACK_CHAR;
+
+        int bytes_encoded = unicode_to_utf8_encoding(code_point, buffer);
+        size_t written = fwrite(buffer, 1, (size_t)bytes_encoded, output);
+
+        if (written != (size_t)bytes_encoded)
+            return 1;
+    }
+
+    return 0;
 }
 
