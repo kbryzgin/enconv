@@ -68,3 +68,27 @@ static const uint16_t iso8859_5_table[128] = {
     0x2116, 0x0451, 0x0452, 0x0453, 0x0454, 0x0455, 0x0456, 0x0457,
     0x0458, 0x0459, 0x045A, 0x045B, 0x045C, 0x00A4, 0x045E, 0x045F
 };
+
+uint32_t decode_to_unicode(unsigned char byte, encodings name) {
+    if (byte < 128)
+        return byte;
+    
+    int index = byte - 128;
+
+    switch (name) {
+        case CP1251:
+            return cp1251_table[index];
+            break;
+        case KOI8R:
+            return koi8r_table[index];
+            break;
+        case ISO8859_5:
+            return iso8859_5_table[index];
+            break;
+        case UNDEFINED:
+            return 0xFFFD;
+            break;
+    }
+
+    return 0xFFFD;
+}
